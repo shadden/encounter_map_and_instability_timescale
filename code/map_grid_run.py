@@ -28,6 +28,7 @@ def get_z0s(Ntp,etp):
 
 def record_trajectories(pl_map,Ntp,times):
     Ntimes = len(times)
+    timesDone = np.zeros(Ntimes)
     a = np.zeros((Ntp,Ntimes))
     Tsyn = -2*np.pi/pl_map.n21
     dt = 0.2 * Tsyn
@@ -37,8 +38,8 @@ def record_trajectories(pl_map,Ntp,times):
     tnow = 0
     for i,t in enumerate(times):
         timesDone[i] = tnow
-        for j in range(Nda):
-            ztrajs[j,i] = zs[j]
+        for j in range(Ntp):
+            ztrajs[j,i] = z[j]
             z[j],_tnow = pl_map.integrate(z[j],tnow,t,dt)
         tnow = _tnow
     return timesDone,ztrajs
@@ -55,9 +56,9 @@ def mapfunc(pars):
     return da_array
 
 
-Nout = 300
-Tfin = 5e4
-Ngrid = 2*50
+Nout = 30
+Tfin = 1e3
+Ngrid = 3
 Ntp = 10
 m1 = m2 = 3e-5
 etp = 0.09
@@ -68,9 +69,9 @@ for J2 in J2s:
     for J1 in J1s:
         pars.append((m1,m2,J1,J2,etp,Ntp,Tfin,Nout))
 
-np.save("pars_array_2",np.array(pars))
+np.save("analytic_pars_array_2",np.array(pars))
 pool = InterruptiblePool()
-results = pool.map(mapfunc,pars)
+results = list(map(mapfunc,pars))
 
 results_array = np.array(results).reshape(Ngrid,Ngrid,Ntp,Nout)
-np.save("results_array_2",results_array)
+np.save("analytic_results_array_2",results_array)
