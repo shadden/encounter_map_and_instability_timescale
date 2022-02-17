@@ -16,11 +16,11 @@ def get_sim(m1,m2,J1,J2,etp,Ntp):
         sim.add(m=0,a=1,e=etp,l='uniform',pomega='uniform',hash=name)
     sim.move_to_com()
     sim.integrator='whfast'
+    sim.ri_whfast.safemode=0
     sim.dt = sim.particles[1].P / 20.
     return sim
 
 def record_semimajor_axes(sim,times):
-    sim,times = pars
     Ntp = sim.N-3
     Ntimes = len(times)
     a = np.zeros((Ntp,Ntimes))
@@ -39,21 +39,22 @@ def mapfunc(pars):
     return result
 
 
-Nout = 100
-Tfin = 1e3
-Ngrid = 5
+Nout = 300
+Tfin = 5e4
+Ngrid = 2*50
 Ntp = 10
 m1 = m2 = 3e-5
-etp = 0.04
-J1s = 4 + np.linspace(-0.5,0.5,Ngrid)
-J2s = 4 + np.linspace(-0.5,0.5,Ngrid)
+etp = 0.09
+J1s = 4 + np.linspace(-1,1,Ngrid)/2
+J2s = 4 + np.linspace(-1,1,Ngrid)/2
 pars = []
 for J2 in J2s:
     for J1 in J1s:
         pars.append((m1,m2,J1,J2,etp,Ntp,Tfin,Nout))
 
+np.save("pars_array_2",np.array(pars))
 pool = InterruptiblePool()
 results = pool.map(mapfunc,pars)
 
 results_array = np.array(results).reshape(Ngrid,Ngrid,Ntp,Nout)
-np.save("results_array",results_array)
+np.save("results_array_2",results_array)
