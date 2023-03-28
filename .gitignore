@@ -1,4 +1,6 @@
-code/__pycache__/
+*.csv
+*.png
+*/__pycache__/
 data/
 MathematicaNotebooks/
 *.ipynb
