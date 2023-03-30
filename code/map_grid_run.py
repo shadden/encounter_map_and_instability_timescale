@@ -46,32 +46,35 @@ def record_trajectories(pl_map,Ntp,times):
 
 
 def mapfunc(pars):
-    m1,m2,J1,J2,etp,Ntp,Tfin,Nout = pars
+    m1,m2,J1,J2,etp,Ntp,Tfin,Nout,idnum = pars
     pl_map = get_map(m1,m2,J1,J2,etp)
     times = np.linspace(0,Tfin,Nout)
     timesDone,trajectories = record_trajectories(pl_map,Ntp,times)
     pa_vals = trajectories[:,:,3]
     pe_vals = trajectories[:,:,4]
     da_array = pe_vals - pa_vals
+    np.save("da_{}".format(idnum),da_array)
     return da_array
 
 
-Nout = 30
-Tfin = 1e3
-Ngrid = 3
+Nout = 600
+Tfin = 5e4 * 2 * np.pi
+Ngrid = 50
 Ntp = 10
-m1 = m2 = 3e-5
+m1 = m2 = 1e-5
 etp = 0.09
 J1s = 4 + np.linspace(-1,1,Ngrid)/2
 J2s = 4 + np.linspace(-1,1,Ngrid)/2
 pars = []
+idnum = 0
 for J2 in J2s:
     for J1 in J1s:
-        pars.append((m1,m2,J1,J2,etp,Ntp,Tfin,Nout))
+        pars.append((m1,m2,J1,J2,etp,Ntp,Tfin,Nout,idnum))
+        idnum+=1
 
-np.save("analytic_pars_array_2",np.array(pars))
-pool = InterruptiblePool()
+np.save("analytic_pars_array",np.array(pars))
+pool = InterruptiblePool(16)
 results = list(map(mapfunc,pars))
 
 results_array = np.array(results).reshape(Ngrid,Ngrid,Ntp,Nout)
-np.save("analytic_results_array_2",results_array)
+np.save("analytic_results_array",results_array)
