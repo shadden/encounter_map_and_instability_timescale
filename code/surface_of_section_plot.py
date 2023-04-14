@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from celmech.maps import CometMap
 from sos_utils import *
 import rebound as rb
