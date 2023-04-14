@@ -2,6 +2,7 @@
 *.png
 */__pycache__/
 data/
+references/
 MathematicaNotebooks/
 *.ipynb
 # Compiled source #
