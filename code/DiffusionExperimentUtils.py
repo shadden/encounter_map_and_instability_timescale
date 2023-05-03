@@ -27,8 +27,6 @@ def get_histories(init_pts,times,mp):
         pts,_ = get_map_pts_vs_time(pt,mp,times)
         histories.append(pts)
     return np.array(histories)
-from sos_utils import get_map_pts
-
 
 def get_a_array(pt,mapfn,T,k=1):
     a = np.zeros(T)
