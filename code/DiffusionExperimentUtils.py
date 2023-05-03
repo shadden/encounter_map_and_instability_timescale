@@ -63,8 +63,20 @@ def compute_correlation_functions(mapfn,ensemble,T,k=1):
         C_arr[i] = np.correlate(a,a,'full')[T-1:]
         C_arr[i] *= 1/(T - np.arange(T))
     return C_arr
+
 def estimate_diffusion_coefficient(mapfn,ensemble,T,k=1):
     C_arr = compute_correlation_functions(mapfn,ensemble,T,k)
     Dmean = np.mean(np.cumsum(C_arr,axis=1),axis=0)
     Derr = np.sqrt(np.var(np.cumsum(C_arr,axis=1),axis=0)/len(ensemble))
     return Dmean, Derr
+
+def estimate_diffusion_coefficient_simple(mapfn,ensemble,T):
+    variances = np.zeros(T)
+    for i in range(T):
+        w = np.transpose(ensemble)[1]
+        variances[i] = np.var(w)
+        for j,pt in enumerate(ensemble):
+            ensemble[j]=mapfn(pt)
+    n = np.arange(T)
+    D,_ = np.polyfit(n,variances,1)
+    return D
