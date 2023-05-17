@@ -31,52 +31,64 @@ def second_order_overlap_eps(cmap):
     tot += np.sqrt(first_order_half_width_sq)
     return 1/tot/tot
 
-mN = 5.15e-5
-N = 20
-beta_vals = np.linspace(30/65.,30/35.,10)
-cmap = CometMap(mN,20,40./30.)
-crits1,crits2 = np.zeros((2,len(beta_vals)))
-for i,beta in enumerate(beta_vals):
-    if beta<1/1.8:
-        cmap._kmax = 12
-    else:
-        cmap._kmax = 32
-    cmap.q = 1/beta
+def ak(theta,w,k,cmap):
+    for _ in range(k+1):
+        theta_old,w_old = theta,w
+        theta,w = cmap((theta,w))
+    return w-w_old
 
-    crits1[i] = cmap.get_eps_crit()
-    crits2[i] = second_order_overlap_eps(cmap)
+if __name__=="__main__":
+    from scipy.fft import rfft2
+    from scipy.interpolate import interp1d
+    import sys
+    
+    # Parameters
+    mN = 5.15e-5 # Mass of Neptune
+    Ngrid = 128 # grid size for fft
+    Niter = 1000 # number of iterations for numerical measurement of diffusion rate
+    Nensemble = 1000 # size of ensemble for numerical measurement of diffusion rate
+    kmax = 4 # maximum k value to use for computing analytic diffusion rate
 
-from matplotlib import pyplot as plt
-fig = plt.figure()
-for ecrit in [crits1,crits2]:
-    a = (ecrit/(3*cmap.m))**(2/5)
-    q = 30/beta_vals
-    plt.plot(a,q,'s-')
-plt.xscale('log')
-plt.show()
+    # Set percienter distance from command line argument
+    I = int(sys.argv[1])
+    q = np.linspace(35,65,7)[I]/30.0
 
+    # Last KAM curve data
+    kam_data = np.load("../data/last_kam_curves.npy")
+    q_kam,Ncrit = np.transpose(kam_data)
+    Nmin = int(interp1d(q_kam/30,Ncrit)(q)) + 30 # min MMR
+    Nmax = Nmin +  200 # max MMR
+    Nstep = 2 # step size in MMRs
 
+    Nvals = np.arange(Nmin,Nmax,Nstep) # MMRs to loop through
 
-if False:
-    from matplotlib import pyplot as plt
-    fig,ax=plt.subplots(2)
-    Nf = 50
-    Dratios = np.zeros(Nf)
-    fvals = np.geomspace(8,1000,Nf)
-    for i,f in enumerate(fvals):
-        cmap.m  = f * (epscrit / cmap.eps) * cmap.m
-        ensemble  = get_ensemble((0,0.5),1e-8,100)
-        var = VarianceVersusIteration(ensemble,500,cmap)
-        imin = np.sum(var<1e-3)
-        N = np.arange(len(var))
-        x,y=N[imin:],var[imin:]
-        imin = np.sum(var<1e-2)
-        x,y=N[imin:],var[imin:]
-        ax[0].plot(x,y)
-        slope,intercept = np.polyfit(x,y,1)
-        Dratios[i] = slope/cmap.D_QL()
-    ax[1].plot(fvals,Dratios,'ks-')
-    ax[1].set_xscale('log')
-    plt.show()
+    # initialize map
+    cmap = CometMap(mN,Nmin,q)
+    
+    THETA,W = np.meshgrid(
+        np.linspace(0,2*np.pi,Ngrid,endpoint=False),
+        np.linspace(0,1,Ngrid,endpoint=False)
+    )
+    
+    eps0 = cmap.eps
+    result_0 = rfft2(np.vectorize(ak)(THETA,W,0,cmap),norm="forward")
 
+    D_num = np.zeros(len(Nvals))
+    k_vals = np.arange(2,kmax+1,dtype=int)
+    Ck_vals = np.zeros((kmax+1,len(Nvals)))
 
+    for i,Nval in enumerate(Nvals):
+        ensemble = get_ensemble((0,0.5),1e-3,1000)
+        cmap.N = Nval
+        var = VarianceVersusIteration(ensemble,Niter,cmap)
+        D,_=np.polyfit(np.arange(Niter),var,1)
+        D_num[i] = D
+        Ck_vals[0,i] = cmap.D_QL()
+        for k in k_vals:
+            result_k = rfft2(np.vectorize(ak)(THETA,W,k,cmap),norm="forward")
+            Ck_vals[k,i] = 2 * np.real((cmap.eps/eps0) * 2 * result_0[0] @ np.conjugate(result_k[0]))
+    
+    np.save("../data/numerical_diffusion_values_{}".format(I),D_num)
+    np.save("../data/analytic_Ck_values_{}".format(I),Ck_vals)
+    np.save("../data/N_values_{}".format(I),Nvals)
+    
