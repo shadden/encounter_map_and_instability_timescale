@@ -1,5 +1,95 @@
 import numpy as np
 from scipy.optimize import root_scalar, root
+EPS = np.finfo(float).eps
+rtEPS = np.sqrt(EPS)
+from warnings import warn
+
+class NewtsafeResult():
+    def __init__(self,root,newton_calls=0,biscetions=0,converged=False):
+        self.root = root
+        self.newton_calls=newton_calls
+        self.bisections=biscetions
+        self.conveged = converged
+
+def newtsafe(fDf,a,b,max_iter=20,xtol=rtEPS,**kwargs):
+    r"""
+    Implementation of a `safe' Newton's method root search.
+    Tries to uses Newton's method at each step but reverts to 
+    bisection when the proposed root is outside the bracketing
+    interval.
+
+    Parameters
+    ----------
+    fDf : function
+        A function returning both the function value, :math:`f(x)` and
+        its first derivative, :math:`f'(x)`.
+    a : float
+        One edge of the initial bracketing interval.
+    b : float
+        Other edge of the initial bracketing interval.
+    max_iter : int, optional
+        Maximum number of iterations, by default 20
+    xtol : float, optional
+        Tolerance for root accuracy, by default the square root of
+        machine precision
+
+    Returns
+    -------
+    NewtsafeResult
+        Representation of the root finding result
+
+    Raises
+    ------
+    ValueError
+        Raises value error if function does not change sign on 
+        initial interval points.
+    """
+    fl,Dfl = fDf(a)
+    fh,Dfh = fDf(b)
+    if fl*fh > 0:
+        raise ValueError("f(a) and f(b) must have different signs")
+    if np.isclose(fl,0,atol=xtol):
+        return a
+    if np.isclose(fh,0,atol=xtol):
+        return b
+    # orient search so f(a)<0<f(b)
+    xl,xh = (a,b) if  fl<0 else (b,a)
+    root = NewtsafeResult(0.5 * (xl + xh))
+    dx_old = np.abs(xh-xl)
+    dx = dx_old
+    f,Df = fDf(root.root)
+    for i in range(max_iter):
+        # proposed root in interval?
+        cond1 = ((root.root-xh)*Df - f)*((root.root-xl)*Df - f) > 0
+        # decreasing fast enough?
+        cond2 = np.abs(2*f) > np.abs(dx_old*Df)
+        if cond1 or cond2:
+            # bisect
+            root.bisections+=1
+            dxold = dx
+            dx = 0.5 * (xh - xl)
+            root.root = xl + dx
+            if np.isclose(root.root,xl,atol=xtol,rtol=0):
+                root.conveged = True
+                return root
+        else:
+            root.newton_calls+=1
+            dxold = dx
+            dx = f/Df
+            temp = root.root
+            root.root = root.root - dx
+            if np.isclose(root.root,temp,atol=xtol,rtol=0):
+                root.conveged = True
+                return root
+        f,Df=fDf(root.root)
+        if f<0:
+            xl = root.root
+        else:
+            xh = root.root
+    else:
+        warn("Exceeded maximum number of iterations ({})".format(max_iter))
+        return root
+
 
 def nest_map_list(pt0,cmap,n):
     pts = np.zeros((n,2))
@@ -55,9 +145,14 @@ def _find_a_periodic_orbit(m,n,mapfn,symline,**kwargs):
     if kwargs.get('method')=='newton':
         rootfn = lambda s: _newton_root_function(s,m,n,mapfn,symline)
         kwargs['fprime'] = True
+        rt = root_scalar(rootfn,**kwargs)
+    elif kwargs.get('method')=='newtsafe':
+        rootfn = lambda s: _newton_root_function(s,m,n,mapfn,symline)
+        a,b = kwargs['bracket']
+        rt = newtsafe(rootfn,a,b,**kwargs) 
     else:
         rootfn = lambda s: nest_map(symline(s),mapfn,n)[0] - symline(s)[0] - 2 * np.pi * m
-    rt = root_scalar(rootfn,**kwargs)
+        rt = root_scalar(rootfn,**kwargs)
     pt0 = symline(rt.root)    
     orbit = nest_map_list(pt0,mapfn,n)
 
