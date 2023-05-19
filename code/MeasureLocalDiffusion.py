@@ -42,7 +42,8 @@ if __name__=="__main__":
     from scipy.interpolate import interp1d
     import sys
     # Parameters
-    datadir = "/cita/h/home-2/hadden/Projects/07_CometMap/data/" # directory for data
+    #datadir = "/cita/h/home-2/hadden/Projects/07_CometMap/data/" # directory for data
+    datadir = "/fs/lustre/cita/hadden/03_comet_diffusion/data/"
     mN = 5.15e-5 # Mass of Neptune
     Ngrid = 128 # grid size for fft
     Niter = 1000 # number of iterations for numerical measurement of diffusion rate
@@ -54,22 +55,22 @@ if __name__=="__main__":
     q = np.linspace(35,65,7)[I]/30.0
 
     # Last KAM curve data
-    kam_data = np.load(datadir + "/last_kam_curves.npy")
+    kam_data = np.load(datadir + "last_kam_curves.npy")
     q_kam,Ncrit = np.transpose(kam_data)
     Nmin = int(interp1d(q_kam/30,Ncrit)(q)) + 30 # min MMR
-    Nmax = Nmin +  200 # max MMR
+    Nmax = Nmin + 200 # max MMR
     Nstep = 2 # step size in MMRs
 
     Nvals = np.arange(Nmin,Nmax,Nstep) # MMRs to loop through
 
     # initialize map
     cmap = CometMap(mN,Nmin,q)
-    
+
     THETA,W = np.meshgrid(
         np.linspace(0,2*np.pi,Ngrid,endpoint=False),
         np.linspace(0,1,Ngrid,endpoint=False)
     )
-    
+
     eps0 = cmap.eps
     result_0 = rfft2(np.vectorize(ak)(THETA,W,0,cmap),norm="forward")
 
@@ -87,8 +88,7 @@ if __name__=="__main__":
         for k in k_vals:
             result_k = rfft2(np.vectorize(ak)(THETA,W,k,cmap),norm="forward")
             Ck_vals[k,i] = 2 * np.real((cmap.eps/eps0) * 2 * result_0[0] @ np.conjugate(result_k[0]))
-    
+
     np.save(datadir + "numerical_diffusion_values_{}".format(I),D_num)
     np.save(datadir + "analytic_Ck_values_{}".format(I),Ck_vals)
     np.save(datadir + "N_values_{}".format(I),Nvals)
-    
