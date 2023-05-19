@@ -31,11 +31,35 @@ def second_order_overlap_eps(cmap):
     tot += np.sqrt(first_order_half_width_sq)
     return 1/tot/tot
 
-def ak(theta,w,k,cmap):
-    for _ in range(k+1):
-        theta_old,w_old = theta,w
-        theta,w = cmap((theta,w))
-    return w-w_old
+from scipy.fft import rfft2
+
+def ak_array(thetas,ws,Ngrid,k,cmap):
+    ak = np.zeros((k+1,Ngrid,Ngrid))
+    for l in xrange(Ngrid):
+        w_arr = ws[l] * np.ones(Ngrid)
+        theta_arr = np.copy(thetas)
+        for i in range(k+1):
+            theta_arr_old,w_arr_old = theta_arr,w_arr
+            theta_arr,w_arr = cmap((theta_arr,w_arr))
+            ak[i,l] = w_arr - w_arr_old
+    return ak / cmap.eps
+
+
+def get_Ck_array(Ngrid,kmax,cmap):
+    Ck = np.zeros(kmax + 1) 
+    a0 = np.zeros(Ngrid//2+1)
+    a0[1:cmap.kmax+1] = cmap.amps
+    kmore = np.arange(cmap.kmax+1,Ngrid//2+1)
+    A,lmbda = cmap.A_const, cmap.lambda_const
+    a0[cmap.kmax+1:] =  A * np.exp(-lmbda * kmore)
+    Ck[0] = 0.5 * a0 @ a0
+    thetas = np.linspace(0,2*np.pi,Ngrid,endpoint=False)
+    ws = np.linspace(0,1,Ngrid,endpoint=False)
+    ak_arr = ak_array(thetas,ws,Ngrid,kmax,cmap)
+    for k in range(2,kmax+1):
+        fftres = rfft2(ak_arr[k],norm="forward")
+        Ck[k] = 2 * np.real(-1j * a0 @ np.conjugate(fftres[0]))
+    return Ck
 
 if __name__=="__main__":
     from scipy.fft import rfft2
