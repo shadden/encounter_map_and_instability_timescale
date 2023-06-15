@@ -31,7 +31,7 @@ if __name__=="__main__":
     mN = 5.15e-5
     cmap = CometMap(mN,Nmmr,q/aN,max_kmax=64)
 
-    fig,ax = plt.subplots(1,2,sharex=True,sharey=True,figsize=(10,5))
+    fig,ax = plt.subplots(2,2,sharex=True,sharey=True,figsize=(10,10))
     Norbit = 200
     Ngrid = 400
 
@@ -49,7 +49,7 @@ if __name__=="__main__":
         Ecirc = Hfn(np.pi/d,w0)
         Esx = Hfn(0,w0)
         lvls=np.sort([Hfn(theta0,w0) for theta0 in theta0s])
-        ax[1].contour(X/np.pi,Y,Z,levels=lvls,colors=['k'],linestyles=['-'])
+        ax[0,1].contour(X/np.pi,Y,Z,levels=lvls,colors=['k'],linestyles=['-'])
         
         for theta0 in theta0s:
             pt = (theta0,w0)
@@ -59,7 +59,7 @@ if __name__=="__main__":
                 pt = cmap(pt)
             theta,w = np.transpose(orbit)
             theta=wrap2pi(theta)
-            ax[0].plot(theta/np.pi,w,'.',ms=1)
+            ax[0,0].plot(theta/np.pi,w,'.',ms=1)
 
             
     for n,d in [(0,1),(1,1)]:
@@ -74,7 +74,7 @@ if __name__=="__main__":
         X,Y = np.meshgrid(th,w)
         Z = Hfn(X,Y)
         lvls=np.sort([Hfn(theta0,w0) for theta0 in theta0s])
-        ax[1].contour(X/np.pi,Y,Z,levels=lvls,colors=['k'],linestyles=['-'])
+        ax[0,1].contour(X/np.pi,Y,Z,levels=lvls,colors=['k'],linestyles=['-'])
         for theta0 in np.linspace(-np.pi,np.pi,13,endpoint=False):
             pt = (theta0,w0)
             orbit = np.zeros((Norbit,2))
@@ -83,16 +83,16 @@ if __name__=="__main__":
                 pt = cmap(pt)
             theta,w = np.transpose(orbit)
             theta=wrap2pi(theta)
-            ax[0].plot(theta/np.pi,w,'.',ms=1)
+            ax[0,0].plot(theta/np.pi,w,'.',ms=1)
 
-    ax[0].set_ylim(0,1)
-    ax[0].set_ylabel("$w$",fontsize=16)
+    ax[0,0].set_ylim(0,1)
+    ax[0,0].set_ylabel("$w$",fontsize=16)
     
-    ax[0].set_xlabel(r"$\theta/\pi$",fontsize=16)
-    ax[1].set_xlabel(r"$\theta/\pi$",fontsize=16)
+    ax[0,0].set_xlabel(r"$\theta/\pi$",fontsize=16)
+    ax[0,1].set_xlabel(r"$\theta/\pi$",fontsize=16)
 
-    ax[0].set_title(r"Map",fontsize=18)
-    ax[1].set_title(r"Analytic",fontsize=18)
+    ax[0,0].set_title(r"Map",fontsize=18)
+    ax[0,1].set_title(r"Analytic",fontsize=18)
     for a in ax:
         plt.sca(a)
         plt.tick_params(direction='in',size=8,labelsize=14)
