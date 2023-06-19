@@ -9,7 +9,7 @@ def get_trajectory_escape_times(x0,sigma_w0,Ntraj,Tmax,comet_map, Pplanet = 1 , 
     bound = np.ones(Ntraj,dtype = bool)
     while np.any(bound) and np.any(times[bound]<Tmax):
         times[bound] += Pplanet * xs[bound]**(-1.5)
-        thetas[bound],xs[bound] = comet_map.full_map(np.array((thetas[bound],xs[bound])))
+        thetas[bound],xs[bound] = comet_map.full_map(np.array((thetas[bound],xs[bound])))[bound]
         bound = np.logical_and(xs>x_esc,bound)
     return times, xs, thetas, bound
 
