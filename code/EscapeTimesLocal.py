@@ -4,7 +4,7 @@ import sys
 
 savedir = "/fs/lustre/cita/hadden/03_comet_diffusion/escape_times/"
 
-def get_local_escape_times(sigma_w0,Ntraj,itermax,comet_map, w_esc = 1):
+def get_local_escape_times(sigma_w0,Ntraj,itermax,comet_map, w_esc = 0.5):
     thetas = np.zeros(Ntraj)
     ws = 0.5 + sigma_w0 * np.random.randn(Ntraj)
     bound = np.ones(Ntraj,dtype = bool)
@@ -14,7 +14,7 @@ def get_local_escape_times(sigma_w0,Ntraj,itermax,comet_map, w_esc = 1):
     while np.any(bound) and i<itermax:
         iterations[bound] = i
         thetas[bound],ws[bound] = comet_map(np.array((thetas[bound],ws[bound])))
-        bound = np.logical_and(np.abs(ws)<w_esc,bound)
+        bound = np.logical_and(np.abs(ws-0.5)<w_esc,bound)
         i+=1
     return iterations, ws, thetas, bound
 
