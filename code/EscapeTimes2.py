@@ -22,7 +22,8 @@ if __name__=="__main__":
     datadir="/fs/lustre/cita/hadden/03_comet_diffusion/data/"
     qI = int(sys.argv[1])
     seed = int(sys.argv[2])
-    qs = 37.5 + np.linspace(-1,1,5)
+    #qs = 37.5 + np.linspace(-1,1,5)
+    qs = 37.5 + np.linspace(-2,-1,4,endpoint=False)
     np.random.seed(seed)
     q = qs[qI]
     N = 15
@@ -31,7 +32,7 @@ if __name__=="__main__":
     Nmax = 300_000
     iterations, w0s,  bound = get_local_escape_times(1e-3,Ntraj,Nmax,cmap)
     np.savez_compressed(
-        '{}/local_escape_times_q{:.3f}_N{:03d}'.format(savedir,q,cmap.N),
+        '{}/local_escape_times_q{:.3f}_N{:03d}_seed{:03d}'.format(savedir,q,cmap.N,seed),
         iterations = iterations,
         w0_values = w0s,
         bound = bound
