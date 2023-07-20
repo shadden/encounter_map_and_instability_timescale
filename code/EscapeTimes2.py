@@ -22,8 +22,8 @@ if __name__=="__main__":
     datadir="/fs/lustre/cita/hadden/03_comet_diffusion/data/"
     qI = int(sys.argv[1])
     seed = int(sys.argv[2])
-    #qs = 37.5 + np.linspace(-1,1,5)
-    qs = 37.5 + np.linspace(-2,-1,4,endpoint=False)
+    qs = 37.5 + np.linspace(-1,1,5)
+    #qs = 37.5 + np.linspace(-2,-1,4,endpoint=False)
     np.random.seed(seed)
     q = qs[qI]
     N = 15
