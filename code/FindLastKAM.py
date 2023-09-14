@@ -15,7 +15,7 @@ def KAM_exists(cmap,Nensemble,Niter):
     else:
         return True
 
-def experiment(q,Nensemble = 10,Ttraj = 5e9,return_cmap = False):
+def experiment(q,Nensemble = 1_000,Ttraj = 5e9,return_cmap = False):
     cmap = CometMap(muN,10,q/aN,max_kmax = 64,rtol = 0.07)
     epscrit = cmap.get_eps_crit(kmax = 2)
     Ncrit = int(np.floor((epscrit/cmap.m/3)**(3/5)))
